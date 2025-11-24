@@ -85,7 +85,7 @@ func resourceComputeInstanceV2() *schema.Resource {
 			"user_data": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
+				ForceNew: false,
 				// just stash the hash for state & diff comparisons
 				StateFunc: func(v any) string {
 					switch v := v.(type) {
@@ -1091,7 +1091,7 @@ func resourceComputeInstanceV2Update(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	if d.HasChange("image_id") || d.HasChange("image_name") || d.HasChange("personality") {
+	if d.HasChange("image_id") || d.HasChange("image_name") || d.HasChange("personality") || d.HasChange("user_data") {
 		var newImageID string
 
 		imageClient, err := config.ImageV2Client(ctx, GetRegion(d, config))
@@ -1118,6 +1118,7 @@ func resourceComputeInstanceV2Update(ctx context.Context, d *schema.ResourceData
 		var rebuildOpts servers.RebuildOptsBuilder = &servers.RebuildOpts{
 			ImageRef:    newImageID,
 			Personality: resourceInstancePersonalityV2(d),
+			UserData:    []byte(d.Get("user_data").(string)),
 		}
 
 		log.Printf("[DEBUG] Rebuild configuration: %#v", rebuildOpts)
